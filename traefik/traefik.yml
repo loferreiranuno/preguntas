@@ -6,6 +6,7 @@ entryPoints:
         entryPoint:
           to: websecure
           scheme: https
+          permanent: true
   websecure:
     address: ":443"
 
@@ -13,7 +14,7 @@ certificatesResolvers:
   letsencrypt:
     acme:
       email: "loferreira.nuno@gmail.com"
-      storage: "/etc/traefik/acme.json"
+      storage: "/letsencrypt/acme.json"
       httpChallenge:
         entryPoint: web
 
@@ -22,6 +23,7 @@ providers:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
     network: traefik-public
+    watch: true
 
 api:
   dashboard: true
@@ -29,16 +31,25 @@ api:
 
 log:
   level: DEBUG
+  format: json
 
 http:
+  middlewares:
+    https-redirect:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    
   routers:
     frontend:
       rule: "Host(`crititag.com`)"
       entryPoints:
         - websecure
       service: frontend
-      tls:
+      tls: 
         certResolver: letsencrypt
+      middlewares:
+        - https-redirect
     api:
       rule: "Host(`api.crititag.com`)"
       entryPoints:
@@ -46,3 +57,5 @@ http:
       service: api
       tls:
         certResolver: letsencrypt
+      middlewares:
+        - https-redirect

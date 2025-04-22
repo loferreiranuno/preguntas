@@ -17,17 +17,25 @@ app.use((req, res, next) => {
     next();
 });
 
-// CORS configuration
+// CORS configuration - update the configuration
 app.use(cors({
     origin: 'https://crititag.com',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+    exposedHeaders: ['Access-Control-Allow-Origin'],
     credentials: true,
-    optionsSuccessStatus: 204
+    maxAge: 86400
 }));
 
-// Handle preflight
-app.options('*', cors());
+// Handle preflight requests
+app.options('*', (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', 'https://crititag.com');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.status(204).end();
+});
 
 // Parse JSON bodies after CORS
 app.use(express.json({ strict: false }));
@@ -145,13 +153,38 @@ class Game {
     }
 }
 
-// Initialize WebSocket server
-const wss = new WebSocket.Server({ noServer: true });
+// Update WebSocket server configuration
+const wss = new WebSocket.Server({ 
+    noServer: true,
+    clientTracking: true,
+    perMessageDeflate: {
+        zlibDeflateOptions: {
+            chunkSize: 1024,
+            memLevel: 7,
+            level: 3
+        },
+        zlibInflateOptions: {
+            chunkSize: 10 * 1024
+        }
+    }
+});
 
-// WebSocket connection handling
-wss.on('connection', (ws) => {
+// WebSocket connection handling with proper error handling
+wss.on('connection', (ws, req) => {
+    console.log('New WebSocket connection from:', req.headers.origin);
+    
     onlineUsers++;
     broadcastOnlineUsers();
+    
+    ws.isAlive = true;
+    
+    ws.on('pong', () => {
+        ws.isAlive = true;
+    });
+    
+    ws.on('error', (error) => {
+        console.error('WebSocket error:', error);
+    });
     
     ws.on('close', () => {
         onlineUsers--;
@@ -212,6 +245,20 @@ wss.on('connection', (ws) => {
     });
 });
 
+// Add WebSocket heartbeat
+const interval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+        if (ws.isAlive === false) return ws.terminate();
+        
+        ws.isAlive = false;
+        ws.ping(() => {});
+    });
+}, 30000);
+
+wss.on('close', () => {
+    clearInterval(interval);
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok' });
@@ -259,9 +306,20 @@ const server = app.listen(process.env.PORT || 3000, () => {
     console.log(`Server running on port ${process.env.PORT || 3000}`);
 });
 
-// Integrate WebSocket with HTTP server
+// Update the server upgrade handling
 server.on('upgrade', (request, socket, head) => {
+    const origin = request.headers.origin;
+    
+    // Check origin
+    if (origin !== 'https://crititag.com') {
+        socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+        socket.destroy();
+        return;
+    }
+    
+    // Handle WebSocket upgrade
     wss.handleUpgrade(request, socket, head, (ws) => {
+        console.log('WebSocket connection upgraded successfully');
         wss.emit('connection', ws, request);
     });
 });

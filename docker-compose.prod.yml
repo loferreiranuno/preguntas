@@ -13,9 +13,11 @@ services:
     networks:
       - traefik-public
     command:
-      - "--log.level=DEBUG"  # Added for better debugging
-      - "--api.insecure=false"  # Securing the API
+      - "--log.level=DEBUG"
+      - "--api.insecure=false"
       - "--providers.docker=true"
+      - "--providers.file.directory=/etc/traefik"
+      - "--providers.file.watch=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
@@ -72,9 +74,15 @@ services:
       - "traefik.http.routers.backend.tls=true"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      - "traefik.http.routers.backend.middlewares=cors@file,websocket-headers@docker"
       - "traefik.http.middlewares.websocket-headers.headers.customrequestheaders.Upgrade=websocket"
       - "traefik.http.middlewares.websocket-headers.headers.customrequestheaders.Connection=Upgrade"
+      - "traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.middlewares.cors.headers.accesscontrolalloworiginlist=https://crititag.com"
+      - "traefik.http.middlewares.cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.cors.headers.accesscontrolallowheaders=*"
+      - "traefik.http.middlewares.cors.headers.accesscontrolallowcredentials=true"
+      - "traefik.http.middlewares.cors.headers.accesscontrolmaxage=100"
+      - "traefik.http.routers.backend.middlewares=cors@file,websocket-headers@docker,sslheader"
 
   postgres:
     image: postgres:14-alpine

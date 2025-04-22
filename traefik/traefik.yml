@@ -9,6 +9,9 @@ entryPoints:
           permanent: true
   websecure:
     address: ":443"
+    http:
+      middlewares:
+        - cors@file
 
 certificatesResolvers:
   letsencrypt:
@@ -24,6 +27,9 @@ providers:
     exposedByDefault: false
     network: traefik-public
     watch: true
+  file:
+    directory: "/etc/traefik"
+    watch: true
 
 api:
   dashboard: true
@@ -35,29 +41,29 @@ log:
 
 http:
   middlewares:
-    https-redirect:
-      redirectScheme:
-        scheme: https
-        permanent: true
     cors:
       headers:
         accessControlAllowMethods:
-          - GET
-          - POST
-          - PUT
-          - DELETE
-          - OPTIONS
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "OPTIONS"
         accessControlAllowHeaders:
-          - "Accept"
-          - "Authorization"
-          - "Content-Type"
-          - "X-Requested-With"
-          - "Origin"
+          - "*"
         accessControlAllowOriginList:
           - "https://crititag.com"
+        accessControlAllowCredentials: true
         accessControlMaxAge: 100
         addVaryHeader: true
-    
+    websocket:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+        customResponseHeaders:
+          Upgrade: "websocket"
+          Connection: "Upgrade"
+  
   routers:
     frontend:
       rule: "Host(`crititag.com`)"
@@ -67,8 +73,8 @@ http:
       tls: 
         certResolver: letsencrypt
       middlewares:
-        - https-redirect
         - cors
+    
     api:
       rule: "Host(`api.crititag.com`)"
       entryPoints:
@@ -77,5 +83,15 @@ http:
       tls:
         certResolver: letsencrypt
       middlewares:
-        - https-redirect
         - cors
+        - websocket
+      
+  services:
+    frontend:
+      loadBalancer:
+        servers:
+          - url: "http://frontend"
+    api:
+      loadBalancer:
+        servers:
+          - url: "http://backend:3000"

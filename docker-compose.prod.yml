@@ -18,7 +18,7 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=admin@crititag.com"
+      - "--certificatesresolvers.myresolver.acme.email=loferreira.nuno@gmail.com"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
 
   frontend:
@@ -32,12 +32,12 @@ services:
       - traefik-public
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.todo-app.rule=Host(`crititag.com`)"
-      - "traefik.http.routers.todo-app.entrypoints=websecure"
-      - "traefik.http.routers.todo-app.tls=true"
-      - "traefik.http.routers.todo-app.tls.certresolver=myresolver"
-      - "traefik.http.services.todo-app.loadbalancer.server.port=80"
-      - "traefik.http.routers.todo-app.middlewares=security-headers"
+      - "traefik.http.routers.frontend.rule=Host(`crititag.com`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+      - "traefik.http.routers.frontend.middlewares=security-headers"
       - "traefik.http.middlewares.security-headers.headers.stsSeconds=31536000"
       - "traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true"
       - "traefik.http.middlewares.security-headers.headers.contentTypeNosniff=true"
@@ -56,13 +56,13 @@ services:
       - internal
     labels:    
       - "traefik.enable=true"
-      - "traefik.http.routers.backend-api.rule=Host(`api.crititag.com`)"
-      - "traefik.http.routers.backend-api.entrypoints=websecure"
-      - "traefik.http.routers.backend-api.tls=true"
-      - "traefik.http.routers.backend-api.tls.certresolver=myresolver"
-      - "traefik.http.services.backend-api.loadbalancer.server.port=3000" 
+      - "traefik.http.routers.backend.rule=Host(`api.crititag.com`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+      - "traefik.http.services.backend.loadbalancer.server.port=3000" 
       # Add WebSocket support
-      - "traefik.http.routers.backend-api.middlewares=websocket-headers"
+      - "traefik.http.routers.backend.middlewares=websocket-headers"
       - "traefik.http.middlewares.websocket-headers.headers.customrequestheaders.Upgrade=websocket"
       - "traefik.http.middlewares.websocket-headers.headers.customrequestheaders.Connection=Upgrade"
 

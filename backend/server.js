@@ -7,14 +7,7 @@ const crypto = require('crypto');
 
 const app = express();
 
-// Basic middleware for logging
-app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
-    console.log('Headers:', req.headers);
-    next();
-});
-
-// CORS configuration
+// Configure CORS first
 app.use(cors({
     origin: ['https://crititag.com', 'http://localhost:8080'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -22,13 +15,23 @@ app.use(cors({
     credentials: true
 }));
 
-// JSON and URL-encoded parsing
+// Basic middleware for logging
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    console.log('Headers:', req.headers);
+    next();
+});
+
+// JSON parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Error handling middleware
+// Custom error handler
 app.use((err, req, res, next) => {
     console.error('Error:', err);
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        return res.status(400).json({ error: 'Invalid JSON' });
+    }
     res.status(500).json({ error: err.message });
 });
 

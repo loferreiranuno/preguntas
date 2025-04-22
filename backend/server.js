@@ -7,9 +7,6 @@ const crypto = require('crypto');
 
 const app = express();
 
-// Add raw body parsing for content verification
-app.use(express.raw({ type: '*/*' }));
-
 // Basic middleware for logging
 app.use((req, res, next) => {
     console.log(`${req.method} ${req.url}`);
@@ -17,28 +14,16 @@ app.use((req, res, next) => {
     next();
 });
 
-// CORS configuration - update the configuration
+// CORS configuration
 app.use(cors({
-    origin: 'https://crititag.com',
+    origin: ['https://crititag.com', 'http://localhost:8080'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
-    exposedHeaders: ['Access-Control-Allow-Origin'],
-    credentials: true,
-    maxAge: 86400
+    credentials: true
 }));
 
-// Handle preflight requests
-app.options('*', (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', 'https://crititag.com');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Origin, X-Requested-With');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Max-Age', '86400');
-    res.status(204).end();
-});
-
-// Parse JSON bodies after CORS
-app.use(express.json({ strict: false }));
+// JSON and URL-encoded parsing
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Error handling middleware

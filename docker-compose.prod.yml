@@ -61,6 +61,7 @@ services:
       - DB_PASSWORD=your_password
       - DB_NAME=kahoot_clone
       - DB_PORT=5432
+      - NODE_ENV=production
     networks:
       - traefik-public
       - internal
@@ -71,7 +72,7 @@ services:
       - "traefik.http.routers.backend.tls=true"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
-      - "traefik.http.routers.backend.middlewares=websocket-headers@docker"
+      - "traefik.http.routers.backend.middlewares=cors@file,websocket-headers@docker"
       - "traefik.http.middlewares.websocket-headers.headers.customrequestheaders.Upgrade=websocket"
       - "traefik.http.middlewares.websocket-headers.headers.customrequestheaders.Connection=Upgrade"
 

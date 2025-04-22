@@ -7,22 +7,37 @@ const crypto = require('crypto');
 
 const app = express();
 
-// Move CORS before any route definitions
+// Add raw body parsing for content verification
+app.use(express.raw({ type: '*/*' }));
+
+// Basic middleware for logging
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    console.log('Headers:', req.headers);
+    next();
+});
+
+// CORS configuration
 app.use(cors({
-    origin: ['https://crititag.com', 'http://localhost:8080'],
-    credentials: true,
+    origin: 'https://crititag.com',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    preflightContinue: false,
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+    credentials: true,
     optionsSuccessStatus: 204
 }));
 
-// Ensure body parsing middleware is set up before routes
-app.use(express.json());
+// Handle preflight
+app.options('*', cors());
+
+// Parse JSON bodies after CORS
+app.use(express.json({ strict: false }));
 app.use(express.urlencoded({ extended: true }));
 
-// Add OPTIONS handling for preflight requests
-app.options('*', cors());
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(500).json({ error: err.message });
+});
 
 // Track connected users
 let onlineUsers = 0;
@@ -197,11 +212,20 @@ wss.on('connection', (ws) => {
     });
 });
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+
 // API Routes
 app.post('/api/games', async (req, res) => {
     try {
+        console.log('Creating new game');
+        console.log('Request body:', req.body);
+        
         const pin = Math.floor(100000 + Math.random() * 900000).toString();
         const hostId = crypto.randomUUID();
+        
         const result = await pool.query(
             'INSERT INTO games (pin, host_id, state) VALUES ($1, $2, $3) RETURNING *',
             [pin, hostId, 'waiting']
@@ -210,7 +234,8 @@ app.post('/api/games', async (req, res) => {
         const game = new Game(pin, hostId);
         activeGames.set(pin, game);
         
-        res.json(result.rows[0]);
+        console.log('Game created:', { pin, hostId });
+        res.json({ pin: result.rows[0].pin, hostId: result.rows[0].host_id });
     } catch (err) {
         console.error('Error creating game:', err);
         res.status(500).json({ error: err.message });

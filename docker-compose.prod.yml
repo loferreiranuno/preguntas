@@ -17,8 +17,6 @@ services:
       - "traefik.http.routers.dashboard.rule=Host(`traefik.crititag.com`)"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.dashboard.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=admin:$$apr1$$ynw7h2rl$$r0qxIcWBy9MBYitxm48Wl1"  # Change this
 
   frontend:
     build:

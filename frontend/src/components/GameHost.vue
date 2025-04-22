@@ -33,9 +33,7 @@ const ws = ref<WebSocket | null>(null);
 
 const createGame = async () => {
   try {
-    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/games`, {
-      hostId: window.crypto.randomUUID()
-    });
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/games`);
     gamePin.value = response.data.pin;
     gameStarted.value = true;
     connectWebSocket();

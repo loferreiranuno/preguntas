@@ -3,6 +3,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const WebSocket = require('ws');
 const cors = require('cors');
+const crypto = require('crypto');
 
 const app = express();
 app.use(cors());
@@ -185,12 +186,13 @@ wss.on('connection', (ws) => {
 app.post('/api/games', async (req, res) => {
     try {
         const pin = Math.floor(100000 + Math.random() * 900000).toString();
+        const hostId = crypto.randomUUID();
         const result = await pool.query(
             'INSERT INTO games (pin, host_id, state) VALUES ($1, $2, $3) RETURNING *',
-            [pin, req.body.hostId, 'waiting']
+            [pin, hostId, 'waiting']
         );
         
-        const game = new Game(pin, req.body.hostId);
+        const game = new Game(pin, hostId);
         activeGames.set(pin, game);
         
         res.json(result.rows[0]);

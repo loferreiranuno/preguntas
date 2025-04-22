@@ -9,7 +9,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik.yml:/etc/traefik/traefik.yml:ro
-      - traefik-public-certificates:/etc/traefik/acme
+      - ./acme.json:/etc/traefik/acme.json
     networks:
       - traefik-public
     labels:

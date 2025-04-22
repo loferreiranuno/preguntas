@@ -42,17 +42,12 @@ for cmd in docker docker-compose; do
     fi
 done
 
-# Create and configure acme.json
+# Remove existing acme.json if it exists and create a new one
 echo -e "${YELLOW}📄 Setting up acme.json...${NC}"
-if [ ! -f "$ACME_PATH" ]; then
-    touch "$ACME_PATH"
-    chmod 600 "$ACME_PATH"
-    echo -e "${GREEN}✅ Created acme.json with proper permissions${NC}"
-else
-    # Ensure correct permissions even if file exists
-    chmod 600 "$ACME_PATH"
-    echo -e "${YELLOW}ℹ️ Updated acme.json permissions${NC}"
-fi
+rm -f "$ACME_PATH"
+touch "$ACME_PATH"
+chmod 600 "$ACME_PATH"
+echo -e "${GREEN}✅ Created fresh acme.json with proper permissions${NC}"
 
 # Create traefik network
 echo -e "${YELLOW}🌐 Setting up Docker network...${NC}"
@@ -63,13 +58,17 @@ else
     echo -e "${YELLOW}ℹ️ Network traefik-public already exists${NC}"
 fi
 
+# Stop and remove all containers and traefik volumes
+echo -e "${YELLOW}🔄 Cleaning up existing deployment...${NC}"
+docker-compose -f $COMPOSE_FILE down -v --remove-orphans
+
+# Clean up any old certificates
+echo -e "${YELLOW}🧹 Cleaning up old certificates...${NC}"
+docker volume rm $(docker volume ls -q | grep traefik) 2>/dev/null || true
+
 # Pull latest images
 echo -e "${YELLOW}📥 Pulling latest Docker images...${NC}"
 docker-compose -f $COMPOSE_FILE pull
-
-# Stop existing containers
-echo -e "${YELLOW}🔄 Stopping existing containers...${NC}"
-docker-compose -f $COMPOSE_FILE down
 
 # Build and start containers
 echo -e "${YELLOW}🏗️ Building and starting containers...${NC}"

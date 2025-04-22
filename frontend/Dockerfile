@@ -9,8 +9,11 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
-# Build without type checking for now (we'll run type checking separately)
-ENV NODE_ENV=production
+# Build with environment variables
+ARG VITE_API_URL
+ARG VITE_WS_URL
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_WS_URL=${VITE_WS_URL}
 RUN npm run build
 
 # Production stage

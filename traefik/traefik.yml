@@ -12,9 +12,10 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: "loferreira.nuno@gmail.com"  # IMPORTANT: Replace this with your real email
+      email: "loferreira.nuno@gmail.com"
       storage: "/etc/traefik/acme.json"
-      tlsChallenge: {}
+      httpChallenge:
+        entryPoint: web
 
 providers:
   docker:
@@ -24,15 +25,10 @@ providers:
 
 api:
   dashboard: true
-  insecure: false  # Securing the dashboard
+  insecure: false
 
 log:
   level: DEBUG
-
-tls:
-  certificates:
-    - certFile: "/etc/traefik/acme.json"
-      keyFile: "/etc/traefik/acme.json"
 
 http:
   routers:
@@ -41,5 +37,12 @@ http:
       entryPoints:
         - websecure
       service: frontend
+      tls:
+        certResolver: letsencrypt
+    api:
+      rule: "Host(`api.crititag.com`)"
+      entryPoints:
+        - websecure
+      service: api
       tls:
         certResolver: letsencrypt

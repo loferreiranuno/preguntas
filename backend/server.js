@@ -6,13 +6,23 @@ const cors = require('cors');
 const crypto = require('crypto');
 
 const app = express();
+
+// Move CORS before any route definitions
 app.use(cors({
     origin: ['https://crititag.com', 'http://localhost:8080'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }));
+
+// Ensure body parsing middleware is set up before routes
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Add OPTIONS handling for preflight requests
+app.options('*', cors());
 
 // Track connected users
 let onlineUsers = 0;
@@ -202,6 +212,7 @@ app.post('/api/games', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (err) {
+        console.error('Error creating game:', err);
         res.status(500).json({ error: err.message });
     }
 });

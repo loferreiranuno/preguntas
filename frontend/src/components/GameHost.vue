@@ -33,8 +33,8 @@ const ws = ref<WebSocket | null>(null);
 
 const createGame = async () => {
   try {
-    const response = await axios.post('http://localhost:3000/api/games', {
-      hostId: crypto.randomUUID()
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/games`, {
+      hostId: window.crypto.randomUUID()
     });
     gamePin.value = response.data.pin;
     gameStarted.value = true;
@@ -45,7 +45,7 @@ const createGame = async () => {
 };
 
 const connectWebSocket = () => {
-  ws.value = new WebSocket('ws://localhost:3000');
+  ws.value = new WebSocket(import.meta.env.VITE_WS_URL);
   
   ws.value.onmessage = (event) => {
     const data = JSON.parse(event.data);

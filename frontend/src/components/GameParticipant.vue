@@ -76,7 +76,7 @@ const isQuestionValid = computed(() => {
 
 const joinGame = async () => {
   try {
-    const response = await axios.post('http://localhost:3000/api/groups', {
+    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/groups`, {
       gamePin: gamePin.value,
       name: groupName.value
     });
@@ -88,7 +88,7 @@ const joinGame = async () => {
 };
 
 const connectWebSocket = () => {
-  ws.value = new WebSocket('ws://localhost:3000');
+  ws.value = new WebSocket(import.meta.env.VITE_WS_URL);
   
   ws.value.onmessage = (event) => {
     const data = JSON.parse(event.data);

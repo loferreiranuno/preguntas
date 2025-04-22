@@ -8,6 +8,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Track connected users
+let onlineUsers = 0;
+
+const broadcastOnlineUsers = () => {
+    wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: 'online_users', count: onlineUsers }));
+        }
+    });
+};
+
 // Database configuration
 const pool = new Pool({
     host: process.env.DB_HOST,
@@ -108,6 +119,14 @@ const wss = new WebSocket.Server({ noServer: true });
 
 // WebSocket connection handling
 wss.on('connection', (ws) => {
+    onlineUsers++;
+    broadcastOnlineUsers();
+    
+    ws.on('close', () => {
+        onlineUsers--;
+        broadcastOnlineUsers();
+    });
+
     ws.on('message', async (message) => {
         const data = JSON.parse(message);
         const game = activeGames.get(data.gamePin);

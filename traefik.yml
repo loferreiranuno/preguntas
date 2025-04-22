@@ -12,7 +12,7 @@ entryPoints:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: "your-email@example.com"  # Change this to your email
+      email: "loferreira.nuno@gmail.com"  # IMPORTANT: Replace this with your real email
       storage: "/etc/traefik/acme.json"
       httpChallenge:
         entryPoint: web
@@ -24,4 +24,14 @@ providers:
 
 api:
   dashboard: true
-  insecure: true  # Allow access without authentication
+  insecure: false  # Securing the dashboard
+
+http:
+  routers:
+    frontend:
+      rule: "Host(`crititag.com`)"
+      entryPoints:
+        - websecure
+      service: frontend
+      tls:
+        certResolver: letsencrypt
